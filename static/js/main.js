@@ -1,269 +1,37 @@
 
-class GF_Clothes {
-    constructor(model, pattern) {
-        this.numX = 3;
-        this.numY = 4;
-        this.modelId = model;
-        this.patternId = pattern;
-        this.renders = {};
-        this.renderTextures = {};
-        this.stages = {};
-        this.animations = [];
-        this.listMap = ["clothes", "sleeve"];
-        this.caches = {};
-        this.bounds = null;
-        this.frame = 0;
-        this.bh = 1;
-        this.index = 0;
+Bitmap.loadByImage = function(img) {
+    var bitmap = new Bitmap();
+    bitmap._image = img;
+    bitmap._url = "";
+    bitmap._isLoading = true;
+    bitmap.width = img.naturalWidth;
+    bitmap.height = img.naturalHeight;
+    bitmap._image.onload = Bitmap.prototype._onLoad.bind(bitmap);
+    bitmap._image.onerror = Bitmap.prototype._onError.bind(bitmap);
+    return bitmap;
+};
+
+
+Sprite.prototype.spriteOne = function() {
+    var renderer = PIXI.autoDetectRenderer(this.width,this.height,{transparent:true});
+    var renderTexture = new PIXI.RenderTexture.create(this.width, this.height);
+    //console.log(renderTexture)
+    renderer.render(this,renderTexture);
+    var img = renderer.extract.image(renderTexture);
+    img.naturalWidth = this.width;
+    img.naturalHeight = this.height;
+
+    //renderTexture.render(this);
+   // var img = renderTexture.getImage();
+
+    var bitmap = Bitmap.loadByImage(img);
+
+    var sprite = new Sprite(bitmap);
+
+    return sprite;
+};
 
-        this.readGroup(this.modelId, "model");
-        this.readGroup(this.patternId, "pattern");
-        this.waitForLoad(() => {
-            this.setup();
-        });
-    }
 
-
-    waitForLoad(callback) {
-        var loadAll = true;
-
-        for (var i in this.caches) {
-            if (!this.caches[i]["loaded"]) {
-                loadAll = false;
-                break;
-            }
-        }
-
-
-        if (!loadAll) {
-            setTimeout(() => {
-                this.waitForLoad(callback);
-            }, 1000);
-        } else {
-
-            callback();
-        }
-    }
-
-
-    setup() {
-        this.setBlendMode();
-
-        this.paint("clothes")
-        this.paint("sleeve")
-        this.combine();
-        this.show();
-    }
-
-
-    combine() {
-
-        this.result = new PIXI.Sprite();
-        this.result.addChild(this["clothes"]);
-        this.result.addChild(this["sleeve"]);
-
-    }
-
-
-
-    show() {
-        this.containerS = PIXI.autoDetectRenderer(this.bounds["width"], this.bounds["height"], { transparent: true });
-        $("#hh").append(this.containerS.view);
-
-
-        this.containerS.render(this.result);
-
-        this.containerDownload = new PIXI.RenderTexture(this.containerS,this.bounds["width"] , this.bounds["height"]);
-
-        this.containerDownload.render(this.result);
-
-
-        this.containerActive = PIXI.autoDetectRenderer(this.bounds["width"] / this.numX, this.bounds["height"], { transparent: true });
-
-        $("#hh").append(this.containerActive.view);
-
-
-        this.containerActive.render(this.result);
-
-
-
-
-
-
-    }
-
-    readGroup(id, rootPath = "model") {
-        this[rootPath] = {};
-        var rootPath2 = `images/${rootPath}`;
-        let list = [`${rootPath2}/${id}_1.png`, `${rootPath2}/${id}_2.png`];
-
-        for (var i in list) {
-            var tmp = new Image();
-            tmp.loaded = false;
-            tmp.src = list[i];
-            tmp.srcid = i;
-            this.caches[list[i]] = tmp
-            var p = this;
-            tmp.onload = function () {
-                this.loaded = true;
-                var base = new PIXI.BaseTexture(this);
-                var text = new PIXI.Texture(base);
-                p[rootPath][p.listMap[this.srcid]] = new PIXI.Sprite(text);
-                if (rootPath == "model") {
-                    p.bounds = {
-                        "width": this.naturalWidth,
-                        "height": this.naturalHeight
-                    }
-                }
-            }
-        }
-    }
-
-    setBlendMode() {
-        for (var i in this.pattern) {
-            var data = this.pattern[i];
-            data.blendMode = PIXI.BLEND_MODES.MULTIPLY;
-        }
-    }
-
-
-    paint(name) {
-
-        var renderer = PIXI.autoDetectRenderer(this.bounds["width"], this.bounds["height"], { transparent: true });
-
-        //var stage = new PIXI.Container();
-        var sp = new PIXI.Sprite();
-
-
-        sp.addChild(this.model[name]);
-
-        var tmpListPattern = [];
-
-        var smX = this.bounds["width"] / this.numX;
-        var smY = this.bounds["height"] / this.numY;
-
-
-        for (var y = 0; y < this.numY; y++) {
-            for (var x = 0; x < this.numX; x++) {
-                tmpListPattern[y * this.numX + x] = new PIXI.Sprite(this.pattern[name].texture.clone());
-                if (y <= 2) {
-                    tmpListPattern[y * this.numX + x].texture.frame = new PIXI.Rectangle(0, 0, smX, smY);
-                } else {
-                    tmpListPattern[y * this.numX + x].texture.frame = new PIXI.Rectangle(smX, 0, smX, smY);
-                }
-                tmpListPattern[y * this.numX + x].position.x = x * smX;
-                tmpListPattern[y * this.numX + x].position.y = y * smY;
-                tmpListPattern[y * this.numX + x].blendMode = PIXI.BLEND_MODES.MULTIPLY;
-                sp.addChild(tmpListPattern[y * this.numX + x]);
-            }
-        }
-
-        //console.log(this.pattern[name]);
-
-        // this.pattern[name].texture.frame = new PIXI.Rectangle(0,0,32,48)
-
-        // sp.addChild(this.pattern[name]);
-
-        this.renders[name] = renderer;
-        this.stages[name] = sp;
-
-        this.renders[name].render(this.stages[name]);
-
-
-        var renderTexture = new PIXI.RenderTexture(renderer, this.bounds["width"], this.bounds["height"]);
-        this.renderTextures[name] = renderTexture;
-
-        this.renderTextures[name].render(this.stages[name]);
-
-        var tmpImg = renderTexture.getImage();
-
-        var tmpBase = new PIXI.BaseTexture(tmpImg);
-        var tmpText = new PIXI.Texture(tmpBase);
-
-        this[name] = new PIXI.Sprite(tmpText);
-
-
-
-        //renderer.render(stage);
-
-        this.animations.push(() => {
-            //this.renders[name].render(this.stages[name]);
-            //this[name] = this.renders[name]
-        });
-    }
-
-
-}
-
-//var hher = new GF_Clothes("a", "p");
-
-//animate();
-
-function animate() {
-    requestAnimationFrame(animate);
-    if (hher.frame < 20) {
-        hher.frame++;
-    } else {
-
-        //renderer2.render(s5);
-        hher.index += hher.bh;
-
-        if (hher.index == 2) {
-            hher.bh = -1;
-        }
-        if (hher.index == 0) {
-            hher.bh = 1;
-        }
-        hher.result.position.x = - hher.index * 32;
-        // s6.position.x = - index * 32;
-        hher.frame = 0;
-    }
-
-    hher.containerActive.render(hher.result);
-}
-
-
-function download() {
-    fileData = hher.containerDownload.getBase64();
-    $("#file").attr("href", fileData);
-    $("#file")[0].click();
-
-}
-
-var bitmap = ImageManager.loadBitmap("images/pattern/","p_1",100);
-var sp2 = new Sprite(bitmap);
-
-
-/*
-var base = new PIXI.BaseTexture(bitmap._image);
-var text = new PIXI.Texture(base);
-var test = new PIXI.Sprite(text);
-*/
-var renderer = PIXI.autoDetectRenderer(128, 192, { transparent: true });
-$("#hh").append(renderer.view);
-//sp2.setFrame(0,0,32,20);
-/*
-function waitForLoad(){
-    console.log(ImageManager.isReady());
-    if (ImageManager.isReady()) {
-        console.log("dddd")
-        renderer.render(sp2);
-    } else {
-        console.log("check")
-        setTimeout(()=>{waitForLoad()},1000);
-    }
-}
-*/
-bitmap.addLoadListener(function(){
-        renderer.render(sp2);
-        bitmap.rotateHue(200);
-        sp2.blendMode = Graphics.BLEND_MULTIPLY
-        renderer.render(sp2);
-        console.log(bitmap.width)
-
-})
-
-//waitForLoad();
 
 var NUM_X = 3;
 var NUM_Y = 4;
@@ -274,7 +42,7 @@ class Model{
         this.clothes = new Sprite(bitmap1);
         var bitmap2 = ImageManager.loadBitmap("images/model/",`${id}_2`);
         this.sleeve = new Sprite(bitmap2);
-        var bitmap3 = ImageManager.loadBitmap("images/model/",`${id}_3`);
+        var bitmap3 = ImageManager.loadBitmap("static/img/","light");
         //this.overlay = new Sprite(bitmap1);
         //this.overlay.blendMode = PIXI.BLEND_MODES.OVERLAY;
 
@@ -284,7 +52,8 @@ class Model{
         this.lighter = new Sprite(bitmap3); 
         this.lighter.blendMode = PIXI.BLEND_MODES.LIGHTEN;
         this.lighter.opacity = 60;
-
+        this.icon = new Image();
+        this.icon.src = `images/model/${id}_icon.png`;
     }
 
     getCenter(value){
@@ -302,29 +71,45 @@ class Model{
     }
 
     changeStatu(value){
-        this.statur.opacity = this.getCenter(value);
+        //this.statur.opacity = this.getCenter(value);
     }
 }
 
 class Pattern{
     constructor(id){
-        var bitmap1 = ImageManager.loadBitmap("images/pattern/",`${id}_1`);
-        this.clothesBitmap = bitmap1;
         this.clothes = new Sprite();
         this.clothesList = [];
-
-        this.fillList("clothes",bitmap1);
-        var bitmap2 = ImageManager.loadBitmap("images/pattern/",`${id}_2`);
-        this.sleeveBitmap = bitmap2;
-
         this.sleeveList = [];
         this.sleeve = new Sprite();
-        this.fillList("sleeve",bitmap2);
+        this.icon = new Image();
+        this.icon.src = `images/pattern/${id}_icon.png`;
+        this.pid = id;
+
+        this.setup();
+    }
+
+    setup(hue = 0){
+        this.clothesBitmap = this.loadClothesBitmap(this.pid,hue);
+        this.fillList("clothes",this.clothesBitmap);
+       
+        this.sleeveBitmap = this.loadSleeveBitmap(this.pid,hue);
+        this.fillList("sleeve",this.sleeveBitmap);
+    }
+
+    loadClothesBitmap(id,hue = 0){
+        var bitmap = ImageManager.loadBitmap("images/pattern/",`${id}_1`,hue);
+        return bitmap;
+    }
+
+    loadSleeveBitmap(id,hue = 0){
+        var bitmap = ImageManager.loadBitmap("images/pattern/",`${id}_2`,hue);
+        return bitmap;
     }
 
     fillList(id,bitmap){
         var parent = this[`${id}List`];
         var container = this[`${id}`];
+        container.removeChildren();
         for(var j = 0;j<NUM_Y;j++){
             for(var i = 0;i<NUM_X;i++){
                 parent[j*NUM_X+i] = new Sprite(bitmap);
@@ -339,11 +124,23 @@ class Pattern{
                 for(var i = 0;i<NUM_X;i++){
                     //parent[j*NUM_X+i] = new Sprite(bitmap1);
                     //this.clothes.addChild(parent[j*NUM_X+i]);
+                    let x = 0;
+                    let y = 0;
+                    let wid = 0;
+                    let hei = 0;
                     if(j<=2){
-                        parent[j*NUM_X + i].setFrame(0,0,width,height);
+                        x = 0;
                     } else {
-                        parent[j*NUM_X + i].setFrame(width,0,width,height);
+                        x = width;
                     }
+
+                    if (i == 1) {
+                        y = 0;
+                    }else {
+                        y = -1;
+                    }
+
+                    parent[j*NUM_X + i].setFrame(x,y,width,height);
                     parent[j*NUM_X + i].x = i*width;
                     parent[j*NUM_X + i].y = j*height;
                 }
@@ -360,16 +157,7 @@ class Pattern{
     }
 
     changeHue(value){
-        if(value>360){
-            value -= 360;
-            this.changeHue(value);
-        } else if(value<0){
-            value += 360
-            this.changeHue(value);
-        } else{
-        this.clothesBitmap.rotateHue(value);
-        this.sleeveBitmap.rotateHue(value);
-        }
+        this.setup(value);
     }
 }
 
@@ -381,15 +169,25 @@ class Combine extends Sprite {
         this.clothes = new Sprite();
         this.clothes.addChild(m.clothes);
         this.clothes.addChild(p.clothes);
+        this.clothes.width = m.clothes.bitmap.width
+        this.clothes.height = m.clothes.bitmap.height;
+
 
         this.sleeve = new Sprite();
         this.sleeve.addChild(m.sleeve);
         this.sleeve.addChild(p.sleeve);
+        this.sleeve.width = m.sleeve.bitmap.width
+        this.sleeve.height = m.sleeve.bitmap.height;
+
 
         this.overlay = new Sprite();
         //this.overlay.addChild(m.overlay);
        // this.overlay.addChild(m.statur);
         this.overlay.addChild(m.lighter);
+
+        this.width = this.clothes.width
+        this.height = this.clothes.height
+
 
 
         this.addChild(this.clothes);
@@ -414,49 +212,307 @@ class Combine extends Sprite {
     }
 }
 
-var c = new Model("a");
-var p = new Pattern("h");
-var r = new Combine(c,p);
-var hue = 0;
-function show(){
-    r.move(1,1);
-    //hue+=20;
-   // r.changeHue(hue+=20);
-    r.changeLight(hue+=20);
-   // r.changeStatu(hue);
-}
+
+
+var $model = {};
+var $pattern = {};
+var $loadOk = false;
+var $listener = [];
+
+var $mid = "a";
+var $pid = "p";
+
+var $c ;
+var $p ;
+var $r ;
+
+var $cActive;
+var $pActive;
+var $rActive;
+
+var width;
+var height;
+
+var $rendererActive;
+var $rendererSilence;
+var $renderTexture;
 
 var index = 0;
 var bh = 1;
 var frame = 0;
 
-renderer.render(r);
-animate2();
+var $operating = false;
+
+//PIXI.autoDetectRenderer(96, 192, { transparent: true });
+
+function resetOperate(){
+    $("#result_operate").children("div").css({
+        "height":height/NUM_Y+"px",
+        "line-height":height/NUM_Y+"px"
+    })
+}
+
+function createANewClothes(model = $mid,pattern = $pid){
+
+    $("#model_list").children("img").removeClass("active");
+    $(`#model_${model}`).addClass("active");
+    $("#pattern_list").children("img").removeClass("active");
+    $(`#pattern_${pattern}`).addClass("active");
+    Hue.setValue(0);
+    Bright.setValue(128);
+
+    $c = new Model(model);
+
+    width = $c.clothes.bitmap.width;
+    height = $c.clothes.bitmap.height;
+    $rendererSilence = PIXI.autoDetectRenderer(width, height, { transparent: true });
+    $rendererActive = PIXI.autoDetectRenderer(width/NUM_X, height, { transparent: true });
+    $renderTexture = new PIXI.RenderTexture.create(width,height);
+
+    resetOperate();
+
+    $("#result_show").empty();
+    $("#result_show").append($rendererSilence.view);
+    $("#result_show").append($rendererActive.view);
+
+
+    $p = new Pattern(pattern);
+    $r = new Combine($c,$p);
+    $rendererSilence.render($r);
+    
+
+
+    
+    $cActive = new Model(model);
+    $pActive = new Pattern(pattern);
+    $rActive = new Combine($cActive,$pActive);
+    $rendererActive.render($r);
+
+    changeBright();
 
 
 
+    //console.log($("#result_show").children())
 
-function animate2(){
-    requestAnimationFrame(animate2);
-    // render the container
-    if (frame < 20) {
-        frame++;
+
+}
+
+function startAnimation(){
+    requestAnimationFrame(startAnimation);
+
+    if(frame<20){
+        frame ++;
     } else {
+        //$rendererSilence.render($r);
 
         index += bh;
-
-        if (index == 2) {
+        if(index == 2){
             bh = -1;
         }
-        if (index == 0) {
+        if(index == 0){
             bh = 1;
         }
-        //background.position.x = - index * 32;
-        //bunny.position.x = - index * 32;
-        //r.x = - index * 32;
-        frame = 0;
-        renderer.render(r);
 
+        if(!$operating){
+            $r.position.x = - index * width/NUM_X;
+            frame = 0;
+            $rendererActive.render($r);
+        } else {
+            $r.position.x = 0;
+            frame = 0;
+            //$rendererSilence.render($r);
+        }
+        //$r.setFrame(index*width/NUM_X,0,width/NUM_X,height);
+    }
+}
+/*
+    requestAnimationFrame(animate);
+    if (hher.frame < 20) {
+        hher.frame++;
+    } else {
+
+        //renderer2.render(s5);
+        hher.index += hher.bh;
+
+        if (hher.index == 2) {
+            hher.bh = -1;
+        }
+        if (hher.index == 0) {
+            hher.bh = 1;
+        }
+        hher.result.position.x = - hher.index * 32;
+        // s6.position.x = - index * 32;
+        hher.frame = 0;
     }
 
+    hher.containerActive.render(hher.result);
+    */
+
+function loadAllData(){
+    $.get("data/data.json",function(data,status){
+        var readIn;
+        if (typeof(data) == "string") {
+            readIn = eval("("+data+")");
+        } else {
+            readIn = data;
+        }
+        loadModel(readIn["model"]);
+        loadPattern(readIn["pattern"]);
+        waitForLoad();
+    });
+    $listener.push(function(){
+        enableOperation();
+        createANewClothes("a","p");
+        //renderer.render($r);
+        startAnimation();
+
+    });
+}
+
+function enableOperation(){
+    for(var i in $model){
+        $model[i].icon.id = `model_${i}`;
+        $model[i].icon.mid = i;
+        $model[i].icon.onclick = function(){
+            setModel(this.mid);
+        }
+        $("#model_list").append($model[i].icon);
+    }
+    for(var i in $pattern){
+        $pattern[i].icon.id = `pattern_${i}`;
+        $pattern[i].icon.pid = i;
+        $pattern[i].icon.onclick = function(){
+            setPattern(this.pid);
+        }
+        $("#pattern_list").append($pattern[i].icon);
+    }
+    $(".choies-list").children("img").addClass("img-thumbnail");
+    $("#overlay").fadeOut("slow");
+}
+
+function setModel(i){
+    $mid = i;
+    createANewClothes();
+}
+
+function setPattern(i){
+    $pid = i;
+    createANewClothes();
+}
+
+function loadModel(dIn){
+    dIn.forEach(function(key){
+        $model[key] = new Model(key);
+    })
+}
+
+function loadPattern(dIn){
+    dIn.forEach(function(key){
+        $pattern[key] = new Pattern(key);
+    })
+}
+
+function loadOkCallBack(){
+    while ($listener.length > 0){
+        var func = $listener.pop();
+        func();
+    }
+}
+
+function loadAllHueOfPattern(){
+    for(var i in $pattern){
+        for(var hue = 0;hue<=360;hue++){
+            ImageManager.loadBitmap("images/pattern/",`${i}_1`,hue);
+            ImageManager.loadBitmap("images/pattern/",`${i}_2`,hue);
+        }
+    }
+}
+
+function waitForLoad(){
+    if (ImageManager.isReady()) {
+        //renderer.render(sp2);
+        $loadOk = true;
+        loadOkCallBack();
+    } else {
+        setTimeout(()=>{waitForLoad()},1000);
+    }
+}
+
+loadAllData();
+
+function update(){
+    $operating = true;
+    $r.position.x = 0;
+    $rendererSilence.render($r);
+    $operating = false;
+}
+
+
+function pullPos(line,px){
+    $operating = true;
+    $r.move(line,px);
+    update();
+    $operating = false;
+}
+
+
+function changeHue(){
+    $operating = true;
+    $r.changeHue(Hue.getValue());
+    update();
+    $operating = false;
+    $listener.push(function(){
+        update();
+    })
+    waitForLoad();
+}
+
+function changeBright(){
+    $operating = true;
+    $r.changeLight(Bright.getValue());
+    update();
+    $operating = false;
+}
+
+var Hue = $('#hue').slider().on('change', changeHue).data('slider');
+var Bright = $('#bright').slider().on('change', changeBright).data('slider');
+
+var $downloadNum = 1;
+
+function download(){
+    $operating = true;
+    update();
+    $rendererSilence.render($r,$renderTexture);
+    var img = $rendererSilence.extract.image($renderTexture);
+    $("#file").attr("href",img.src);
+    $("#file").attr("download",`\$clothes_${$downloadNum}.png`);
+    $("#file")[0].click();
+    update();
+    $operating = false;
+    $downloadNum ++;
+}
+
+function preLoadAllData(id){
+    id.children("i").addClass("icon-spin ");
+    
+    id.addClass("disabled");
+    loadAllHueOfPattern();
+    waitForPreLoad(function(){
+        id.removeClass("btn-default");
+        id.addClass("btn-success");
+        id.html("加载完毕");
+        setTimeout(function(){
+            id.remove();
+        },3000);
+    });
+}
+
+
+function waitForPreLoad(callback){
+    if (ImageManager.isReady()) {
+        //renderer.render(sp2);
+        callback();
+    } else {
+        setTimeout(()=>{waitForPreLoad(callback)},100);
+    }
 }

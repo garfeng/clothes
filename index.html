@@ -9,8 +9,11 @@
         -->
         <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
         <link rel="stylesheet" type="text/css" href="static/css/bootstrap-slider.css">
+        <link rel="stylesheet" type="text/css" href="static/css/clothes.css">
+        <link rel="stylesheet" type="text/css" href="static/css/font-awesome.css">
         <script src="static/js/jquery.js"></script>
         <script src="static/js/bootstrap.js"></script>
+        <script src="static/js/bootstrap-slider.js"></script>
         <script src="static/js/pixi.js"></script>
         <script src="static/js/pixi-picture.js"></script>
         <script src="static/js/pixi-tilemaps.js"></script>
@@ -19,47 +22,157 @@
         <script src="static/js/manager.js"></script>
 
 
+
     </head>
     <body>
+
+    <div id="overlay">
+        <div id="background"></div>
+        <div id="info">
+            <div><i class="icon-spin icon-spinner icon-4x"></i></div>
+            <div style="font-size:1.2em">加载基础文件中……</div>
+        </div>
+    </div>
 
     <div class="container">
     <div class="row">
         <div class="col-lg-12">
             <div class="page-header">
-                <h1>Clothes Generate for RPG Maker</h1>
+                <h1>衣服生成器 for RPG Maker</h1>
             </div>
         </div>
     </div>
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="panel panel-default">
-                    <div class="panel-heaing">
-                        <p>模型</p>
+        <div class="row" style="height:700px">
+            <div class="col-lg-8" style="height:100%">
+                <div class="panel panel-default" id="model_list_parent">
+                    <div class="panel-heading">
+                        模型
                     </div>
 
-                    <div class="panel-body"></div>
+                    <div class="panel-body choies-list" id="model_list"></div>
                 </div>
-                <div class="panel panel-default">
-                    <div class="panel-heaing"></div>
+                <div class="panel panel-default" id="pattern_list_parent">
+                    <div class="panel-heading">
+                        花纹
+                    </div>
 
-                    <div class="panel-body"></div>
+                    <div class="panel-body choies-list" id="pattern_list"></div>
                 </div>
             </div>
-            <div class="col-lg-4">
-                <div class="panel panel-default">
-                    <div class="panel-heaing">花纹</div>
+            <div class="col-lg-4" style="height:100%">
+                <div class="panel panel-default" id="result_parent">
+                    <div class="panel-heading">效果</div>
 
-                    <div class="panel-body"></div>
+                    <div class="panel-body" id="result">
+                        <table class="table table-bordered">
+                        <thead>
+                            <td>微调坐标</td>
+                            <td>预览</td>
+                        </thead>
+                            <tr>
+                                <td>
+                                    <div id="result_operate" class="pull-right">
+                                        <div>
+                                            <button class="btn btn-default btn-sm" onclick="pullPos(0,-1)">
+                                                <i class="icon icon-chevron-left"></i>
+                                            </button>
+                                            <button class="btn btn-default btn-sm" onclick="pullPos(0,1)">
+                                                <i class="icon icon-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-default btn-sm" onclick="pullPos(1,-1)">
+                                                <i class="icon icon-chevron-left"></i>
+                                            </button>
+                                            <button class="btn btn-default btn-sm" onclick="pullPos(1,1)">
+                                                <i class="icon icon-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-default btn-sm" onclick="pullPos(2,-1)">
+                                                <i class="icon icon-chevron-left"></i>
+                                            </button>
+                                            <button class="btn btn-default btn-sm" onclick="pullPos(2,1)">
+                                                <i class="icon icon-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-default btn-sm" onclick="pullPos(3,-1)">
+                                                <i class="icon icon-chevron-left"></i>
+                                            </button>
+                                            <button class="btn btn-default btn-sm" onclick="pullPos(3,1)">
+                                                <i class="icon icon-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div id="result_show"></div>
+                                </td>
+
+                            </tr>
+                        </table>
+                        
+                        
+                    </div>
+                </div>
+
+                <div class="panel panel-default" id="operation_parent">
+                    <div class="panel-heading">操作</div>
+
+                    <div class="panel-body" id="operation">
+                        <p>
+                            <b>色相：</b>
+                            <input type="text" class="span2" value="0" data-slider-min="0" data-slider-max="360" data-slider-step="1" data-slider-value="0" data-slider-id="RC" id="hue" data-slider-tooltip="hide" data-slider-handle="square" />
+                        </p>
+<br>
+                        <p>
+
+                            <b>明亮：</b>
+                            <input type="text" class="span2" value="128" data-slider-min="0" data-slider-max="255" data-slider-step="1" data-slider-value="128" data-slider-id="RC" id="bright" data-slider-tooltip="hide" data-slider-handle="square" />
+                        </p>
+                        <br>
+                        <div >
+                        <div style="text-align:right">
+                            <button class="btn btn-default" title="可加速色相操作，预读完后请勿刷新页面，否则需要重新预读" onclick="preLoadAllData($(this));">
+                                <i class="icon-spinner"></i> 预读
+                            </button>
+
+                            <button class="btn btn-primary" onclick="download()">
+                                <i class="icon-download-alt"></i>
+                            下载</button>
+                            <a id="file" download="aaa.png"></a>
+                        </div>
+
+                        <div>
+                        <P></P>
+                            <p class="text-info" style="text-align:right">
+                如果变化跟不上操作，请点击【预读】按钮。
+                        </p>
+                        </div>
+                
+
+
+                    </div>
                 </div>
 
             </div>
 
         </div>
     </div>
-        <div id="hh"></div>
-        <div id="hh2"></div>
+
             <script src="static/js/main.js"></script>
-<button onclick="show()">Download</button>
-<a id="file" download="aaa.png"></a>
+
+            <div class="row">
+                <div class="col-lg-12">
+                <div style="height:30px"></div>
+                <div class="page-footer" style="text-align:right;font-size:1.5em">
+                    <a href="http://rm.66rpg.com/xxxxxx">来帮忙贡献你绘制的模型或花纹</a>
+                </div>
+                    <div style="text-align:right">
+                        <a href="https://github.com/garfeng/clothes">在Github上查看</a> | <a href="http://rm.66rpg.com">66rpg</a>
+                    </div>
+                </div>
+            </div>
     </body>
 </html>
