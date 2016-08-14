@@ -12,9 +12,9 @@
 
 以下为**相同版型**搭配**不同花纹**的示例：
 
-![版型]() + ![花纹]() = ![衣服]()
+![版型](https://raw.githubusercontent.com/garfeng/clothes/master/images/model/a_1.png) + ![花纹](https://raw.githubusercontent.com/garfeng/clothes/master/images/pattern/p_1.png) = ![衣服](https://raw.githubusercontent.com/garfeng/clothes/master/example/1.png)
 
-![版型]() + ![花纹]() = ![衣服]()
+![版型](https://raw.githubusercontent.com/garfeng/clothes/master/images/model/a_1.png) + ![花纹](https://raw.githubusercontent.com/garfeng/clothes/master/images/pattern/magua_1.png) = ![衣服](https://raw.githubusercontent.com/garfeng/clothes/master/example/2.png)
 
 
 
