@@ -12,23 +12,31 @@ Bitmap.loadByImage = function(img) {
 };
 
 
-Sprite.prototype.spriteOne = function() {
-    var renderer = PIXI.autoDetectRenderer(this.width,this.height,{transparent:true});
-    var renderTexture = new PIXI.RenderTexture.create(this.width, this.height);
+Sprite.prototype.spriteOne = function(width = this.width,height = this.height) {
+
     //console.log(renderTexture)
-    renderer.render(this,renderTexture);
-    var img = renderer.extract.image(renderTexture);
-    img.naturalWidth = this.width;
-    img.naturalHeight = this.height;
+    var img = this.generateImage();
 
     //renderTexture.render(this);
    // var img = renderTexture.getImage();
 
     var bitmap = Bitmap.loadByImage(img);
-
     var sprite = new Sprite(bitmap);
-
     return sprite;
+};
+
+Sprite.prototype.generateImage = function(width = this.width,height = this.height) {
+    if(!this.rendererFor){
+        this.rendererFor = PIXI.autoDetectRenderer(this.width,this.height,{transparent:true});
+    }
+    if(!this.renderTextureFor){
+        this.renderTextureFor = new PIXI.RenderTexture.create(this.width, this.height);
+    }
+    this.rendererFor.render(this,this.renderTextureFor);
+    var img = this.rendererFor.extract.image(this.renderTextureFor);
+    img.naturalWidth = width;
+    img.naturalHeight = height;
+    return img;
 };
 
 
@@ -52,8 +60,25 @@ class Model{
         this.lighter = new Sprite(bitmap3); 
         this.lighter.blendMode = PIXI.BLEND_MODES.LIGHTEN;
         this.lighter.opacity = 60;
-        this.icon = new Image();
-        this.icon.src = `images/model/${id}_icon.png`;
+
+        this.mid = id;
+
+        
+//        this.icon.src = `images/model/${id}_icon.png`;
+    }
+
+    loadIcon(){
+        var bitmapIcon = ImageManager.loadBitmap("images/model/",`${this.mid}_1`);
+        var spriteIcon = new Sprite(bitmapIcon);
+        spriteIcon.setFrame(32,0,32,bitmapIcon.height/NUM_Y);
+        this.icon = spriteIcon.generateImage(32,bitmapIcon.height/NUM_Y);
+        this.icon.width = 32;
+        this.icon.height = bitmapIcon.height/NUM_Y;
+        this.icon.id = `model_${this.mid}`;
+        this.icon.mid = this.mid;
+        this.icon.onclick = function(){
+            setModel(this.mid);
+        }
     }
 
     getCenter(value){
@@ -81,11 +106,29 @@ class Pattern{
         this.clothesList = [];
         this.sleeveList = [];
         this.sleeve = new Sprite();
-        this.icon = new Image();
-        this.icon.src = `images/pattern/${id}_icon.png`;
+        
+       
+
+        //this.icon = new Image();
+        //this.icon.src = `images/pattern/${id}_icon.png`;
         this.pid = id;
 
+        this.moveX = [0,0,0,0];
+
         this.setup();
+    }
+
+    loadIcon(){
+        var bitmapIcon = this.loadClothesBitmap(this.pid)
+        var spriteIcon = new Sprite(bitmapIcon);
+        spriteIcon.setFrame(0,0,32,bitmapIcon.height);
+        this.icon = spriteIcon.generateImage(32,bitmapIcon.height);
+
+        this.icon.id = `pattern_${this.pid}`;
+        this.icon.pid = this.pid;
+        this.icon.onclick = function(){
+            setPattern(this.pid);
+        }
     }
 
     setup(hue = 0){
@@ -94,6 +137,7 @@ class Pattern{
        
         this.sleeveBitmap = this.loadSleeveBitmap(this.pid,hue);
         this.fillList("sleeve",this.sleeveBitmap);
+        this.resetPos();
     }
 
     loadClothesBitmap(id,hue = 0){
@@ -109,6 +153,7 @@ class Pattern{
     fillList(id,bitmap){
         var parent = this[`${id}List`];
         var container = this[`${id}`];
+        var p = this;
         container.removeChildren();
         for(var j = 0;j<NUM_Y;j++){
             for(var i = 0;i<NUM_X;i++){
@@ -148,11 +193,24 @@ class Pattern{
         })
     }
 
-    move(j,px){
+    move(j,px = null){
+        var set = false;
+        if(px == null){
+            set = true;
+            px = this.moveX[j];
+        } else {
+            this.moveX[j] += px;
+        }
         for(var i=0;i<NUM_X;i++){
             var n = j*NUM_X+i;
             this.clothesList[n].x += px;
             this.sleeveList[n].x += px;
+        }
+    }
+
+    resetPos(){
+        for(var j = 0;j<NUM_Y;j++){
+            this.move(j);
         }
     }
 
@@ -173,11 +231,13 @@ class Combine extends Sprite {
         this.clothes.height = m.clothes.bitmap.height;
 
 
-        this.sleeve = new Sprite();
-        this.sleeve.addChild(m.sleeve);
-        this.sleeve.addChild(p.sleeve);
-        this.sleeve.width = m.sleeve.bitmap.width
-        this.sleeve.height = m.sleeve.bitmap.height;
+        this.sleeve2 = new Sprite();
+        this.sleeve2.addChild(m.sleeve);
+        this.sleeve2.addChild(p.sleeve);
+        this.sleeve2.width = m.sleeve.bitmap.width
+        this.sleeve2.height = m.sleeve.bitmap.height;
+
+        this.sleeve = this.sleeve2.spriteOne();
 
 
         this.overlay = new Sprite();
@@ -195,12 +255,22 @@ class Combine extends Sprite {
         this.addChild(this.overlay);
     }
 
+    updateSleeve(){
+        this.removeChild(this.sleeve);
+        this.removeChild(this.overlay);
+        this.sleeve = this.sleeve2.spriteOne();
+        this.addChild(this.sleeve);
+        this.addChild(this.overlay);
+    }
+
     move(j,px){
         this.pattern.move(j,px);
+
     }
 
     changeHue(value){
         this.pattern.changeHue(value);
+        this.updateSleeve();
     }
 
     changeLight(value){
@@ -236,6 +306,9 @@ var height;
 var $rendererActive;
 var $rendererSilence;
 var $renderTexture;
+var $rendererSilence4x4
+var $renderTexture4x4;
+
 
 var index = 0;
 var bh = 1;
@@ -261,13 +334,15 @@ function createANewClothes(model = $mid,pattern = $pid){
     Hue.setValue(0);
     Bright.setValue(128);
 
-    $c = new Model(model);
+    $c = $model[model];
 
     width = $c.clothes.bitmap.width;
     height = $c.clothes.bitmap.height;
     $rendererSilence = PIXI.autoDetectRenderer(width, height, { transparent: true });
     $rendererActive = PIXI.autoDetectRenderer(width/NUM_X, height, { transparent: true });
     $renderTexture = new PIXI.RenderTexture.create(width,height);
+    $rendererSilence4x4 = PIXI.autoDetectRenderer(width/NUM_X*4, height, { transparent: true });
+    $renderTexture4x4 = new PIXI.RenderTexture.create(width/NUM_X*4,height);
 
     resetOperate();
 
@@ -276,7 +351,7 @@ function createANewClothes(model = $mid,pattern = $pid){
     $("#result_show").append($rendererActive.view);
 
 
-    $p = new Pattern(pattern);
+    $p = $pattern[pattern];
     $r = new Combine($c,$p);
     $rendererSilence.render($r);
     
@@ -299,6 +374,11 @@ function createANewClothes(model = $mid,pattern = $pid){
 
 function startAnimation(){
     requestAnimationFrame(startAnimation);
+
+    if (frame == 10 && !$operating) {
+        $r.position.x = 0;
+        $rendererSilence.render($r);
+    }
 
     if(frame<20){
         frame ++;
@@ -347,10 +427,11 @@ function startAnimation(){
 
     hher.containerActive.render(hher.result);
     */
+var readIn;
 
 function loadAllData(){
     $.get("data/data.json",function(data,status){
-        var readIn;
+        
         if (typeof(data) == "string") {
             readIn = eval("("+data+")");
         } else {
@@ -371,19 +452,11 @@ function loadAllData(){
 
 function enableOperation(){
     for(var i in $model){
-        $model[i].icon.id = `model_${i}`;
-        $model[i].icon.mid = i;
-        $model[i].icon.onclick = function(){
-            setModel(this.mid);
-        }
+        $model[i].loadIcon();
         $("#model_list").append($model[i].icon);
     }
     for(var i in $pattern){
-        $pattern[i].icon.id = `pattern_${i}`;
-        $pattern[i].icon.pid = i;
-        $pattern[i].icon.onclick = function(){
-            setPattern(this.pid);
-        }
+        $pattern[i].loadIcon();
         $("#pattern_list").append($pattern[i].icon);
     }
     $(".choies-list").children("img").addClass("img-thumbnail");
@@ -484,13 +557,47 @@ function download(){
     update();
     $rendererSilence.render($r,$renderTexture);
     var img = $rendererSilence.extract.image($renderTexture);
+    pushForDownload(img);
+    update();
+    $operating = false;
+}
+
+function download4x4(){
+    $operating = true;
+    update();
+    $r.position.x = 0;
+    var r2 = $r.spriteOne();
+    var r3 = $r.spriteOne();
+    
+    r2.setFrame(width/NUM_X,0,width/NUM_X,height);
+
+    var res = new Sprite();
+    res.addChild(r2);
+
+    r3.position.x = width/NUM_X;
+    res.addChild(r3);
+
+    setTimeout(function(){
+        $rendererSilence4x4.render(res,$renderTexture4x4);
+        setTimeout(function(){
+            var img = $rendererSilence4x4.extract.image($renderTexture4x4);
+            pushForDownload(img);
+            update();
+            $operating = false;
+        },100)
+    },100);
+    
+
+   
+}
+
+function pushForDownload(img){
     $("#file").attr("href",img.src);
     $("#file").attr("download",`\$clothes_${$downloadNum}.png`);
     $("#file")[0].click();
-    update();
-    $operating = false;
     $downloadNum ++;
 }
+
 
 function preLoadAllData(id){
     id.children("i").addClass("icon-spin ");
