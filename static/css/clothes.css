@@ -1,0 +1,57 @@
+.choies-list{
+	overflow-y: auto;
+}
+.choies-list img{
+	margin:3px;
+	cursor: pointer;
+}
+
+img.active{
+	background-color: #888;
+}
+
+#overlay #background{
+	position: fixed;
+	left: 0px;
+	bottom: 0px;
+	width: 100%;
+	height: 100%;
+	background-color: #000;
+	opacity: 0.3;
+	z-index: 99998;
+}
+
+#overlay #info{
+	position: fixed;
+	top:45%;
+	left: 0;
+	width: 100%;
+	text-align: center;
+	z-index: 99999;
+}
+
+#model_list_parent{
+	height: 40%;
+}
+
+#pattern_list_parent{
+	height: 60%;
+}
+
+#result_parent{
+	height: 50%;
+}
+#result{
+	overflow-y: auto;
+}
+#operation_parent{
+	height: 50%;
+}
+#operation{
+	overflow-y: auto;
+}
+
+#result_operate div{
+	height: 48px;
+	line-height: 48px;
+}
