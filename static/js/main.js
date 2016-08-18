@@ -158,7 +158,7 @@ class Pattern{
         for(var j = 0;j<NUM_Y;j++){
             for(var i = 0;i<NUM_X;i++){
                 parent[j*NUM_X+i] = new Sprite(bitmap);
-                parent[j*NUM_X+i].blendMode=Graphics.BLEND_MULTIPLY;
+                parent[j*NUM_X+i].blendMode=PIXI.BLEND_MODES.COLOR_DODGE;
                 container.addChild(parent[j*NUM_X+i]);
             }
         }
