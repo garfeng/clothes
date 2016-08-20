@@ -30,6 +30,10 @@ img.active{
 	z-index: 99999;
 }
 
+.progress-container{
+	width:30%;margin-left:auto;margin-right:auto;margin-top:1em;
+}
+
 #model_list_parent{
 	height: 40%;
 }
@@ -54,4 +58,14 @@ img.active{
 #result_operate div{
 	height: 48px;
 	line-height: 48px;
+}
+
+
+#operate_y div{
+	height: 48px;
+	line-height: 48px;
+}
+
+.top-bottom{
+	height: 2em;
 }
