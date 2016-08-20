@@ -19019,7 +19019,7 @@ function mapWebGLBlendModesToPixi(gl, array)
     array[CONST.BLEND_MODES.OVERLAY]       = [gl.ZERO,       gl.DST_COLOR]; //for Staturation
     array[CONST.BLEND_MODES.DARKEN]        = [gl.ONE,       gl.ONE_MINUS_SRC_ALPHA];
     array[CONST.BLEND_MODES.LIGHTEN]       = [gl.DST_COLOR,       gl.ONE];
-    array[CONST.BLEND_MODES.COLOR_DODGE]   = [gl.ONE,       gl.ONE_MINUS_SRC_ALPHA];
+    array[CONST.BLEND_MODES.COLOR_DODGE]   = [gl.DST_COLOR,       gl.ZERO]; // add for pattern
     array[CONST.BLEND_MODES.COLOR_BURN]    = [gl.ONE,       gl.ONE_MINUS_SRC_ALPHA];
     array[CONST.BLEND_MODES.HARD_LIGHT]    = [gl.ONE,       gl.ONE_MINUS_SRC_ALPHA];
     array[CONST.BLEND_MODES.SOFT_LIGHT]    = [gl.ONE,       gl.ONE_MINUS_SRC_ALPHA];

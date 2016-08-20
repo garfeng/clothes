@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>衣服生成器 for RPG Maker</title>
         <!--
         <script src="http://cdn.bootcss.com/pixi.js/4.0.0-rc3/pixi.js"></script>
         <script src="http://cdn.bootcss.com/jquery/3.0.0/jquery.js"></script>
@@ -29,20 +30,29 @@
     <div id="overlay">
         <div id="background"></div>
         <div id="info">
-            <div><i class="icon-spin icon-spinner icon-4x"></i></div>
             <div style="font-size:1.2em">加载基础文件中……</div>
-        </div>
-    </div>
-
-    <div class="container">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="page-header">
-                <h1>衣服生成器 for RPG Maker</h1>
+            <div class="progress-container">
+            <div class="progress progress-striped active">
+             <div class="progress-bar" id="progress1" style="width: 0%;"></div>
+            </div>
             </div>
         </div>
     </div>
-        <div class="row" style="height:700px">
+
+
+
+    <div class="container">
+    <!--
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="page-header">
+                <h3>衣服生成器 for RPG Maker</h3>
+            </div>
+        </div>
+    </div>
+    -->
+    <div class="top-bottom"></div>
+        <div class="row" style="height:800px">
             <div class="col-lg-8" style="height:100%">
                 <div class="panel panel-primary" id="model_list_parent">
                     <div class="panel-heading">
@@ -71,7 +81,23 @@
                         </thead>
                             <tr>
                                 <td>
-                                    <div id="result_operate" class="pull-right">
+                                    <div class="pull-right">
+                                    <div class="col-xs-4" id="operate_y">
+                                    <div></div>
+                                        <div>
+                                        <button class="btn btn-default btn-sm" onclick="pullPosUp(-1);">
+                                            <i class="icon icon-chevron-up"></i>
+                                        </button>
+                                        </div>
+                                        <div>
+                                        <button class="btn btn-default btn-sm" onclick="pullPosUp(1);">
+                                            <i class="icon icon-chevron-down"></i>
+                                        </button>
+                                        </div>
+                                    <div></div>
+
+                                    </div>
+                                        <div class="col-xs-8" id="result_operate">
                                         <div>
                                             <button class="btn btn-default btn-sm" onclick="pullPos(0,-1)">
                                                 <i class="icon icon-chevron-left"></i>
@@ -104,6 +130,7 @@
                                                 <i class="icon icon-chevron-right"></i>
                                             </button>
                                         </div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td>
@@ -134,10 +161,6 @@
                         <br>
                         <div >
                         <div style="text-align:right">
-                            <button class="btn btn-default" title="可加速色相操作，预读完后请勿刷新页面，否则需要重新预读" onclick="preLoadAllData($(this));">
-                                <i class="icon-spinner"></i> 预读
-                            </button>
-
                             <button class="btn btn-primary" onclick="download()">
                                 <i class="icon-download-alt"></i>
                             下载(3x4)</button>
@@ -148,15 +171,16 @@
                         </div>
 
                         <div>
-                        <P></P>
-                            <p class="text-info" style="text-align:right">
-                如果变化跟不上操作，请点击【预读】按钮。
-                        </p>
+       
                         </div>
-                
-
-
                     </div>
+                    <div id="loadAllHue" style="display:none;margin-top:1em;text-align:center;">
+                        <div class="progress progress-striped active">
+                         <div class="progress-bar" id="progress2" style="width: 0%;"></div>
+                        </div>
+                        <p id="pre_read_info">预读一些操作会用到的数据……<br>（进度条完成期间，可以操作）</p>
+                    </div>
+
                 </div>
 
             </div>
@@ -164,18 +188,22 @@
         </div>
     </div>
 
+
+
             <script src="static/js/main.js"></script>
 
             <div class="row">
                 <div class="col-lg-12">
                 <div style="height:30px"></div>
-                <div class="page-footer" style="text-align:right;font-size:1.5em">
+                <div class="page-footer" style="text-align:center;font-size:1.5em">
                     <a href="http://rm.66rpg.com/forum.php?mod=viewthread&tid=395473">来帮忙贡献你绘制的模型或花纹</a>
                 </div>
-                    <div style="text-align:right">
+                    <div style="text-align:center">
                         <a href="https://github.com/garfeng/clothes">在Github上查看</a> | <a href="http://rm.66rpg.com">66rpg</a>
                     </div>
                 </div>
             </div>
+    <div class="top-bottom"></div>
+
     </body>
 </html>

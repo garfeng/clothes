@@ -70,10 +70,12 @@ class Model{
     loadIcon(){
         var bitmapIcon = ImageManager.loadBitmap("images/model/",`${this.mid}_1`);
         var spriteIcon = new Sprite(bitmapIcon);
-        spriteIcon.setFrame(32,0,32,bitmapIcon.height/NUM_Y);
-        this.icon = spriteIcon.generateImage(32,bitmapIcon.height/NUM_Y);
-        this.icon.width = 32;
-        this.icon.height = bitmapIcon.height/NUM_Y;
+        let tmp_width = bitmapIcon.width/NUM_X;
+        let tmp_height = bitmapIcon.height/NUM_Y;
+        spriteIcon.setFrame(tmp_width,0,tmp_width,tmp_height);
+        this.icon = spriteIcon.generateImage(tmp_width,tmp_height);
+        this.icon.width = tmp_width;
+        this.icon.height = tmp_height;
         this.icon.id = `model_${this.mid}`;
         this.icon.mid = this.mid;
         this.icon.onclick = function(){
@@ -115,14 +117,16 @@ class Pattern{
 
         this.moveX = [0,0,0,0];
 
+        this.move_y = 0;
+
         this.setup();
     }
 
     loadIcon(){
         var bitmapIcon = this.loadClothesBitmap(this.pid)
         var spriteIcon = new Sprite(bitmapIcon);
-        spriteIcon.setFrame(0,0,32,bitmapIcon.height);
-        this.icon = spriteIcon.generateImage(32,bitmapIcon.height);
+        spriteIcon.setFrame(0,0,bitmapIcon.width/2,bitmapIcon.height);
+        this.icon = spriteIcon.generateImage(bitmapIcon.width/2,bitmapIcon.height);
 
         this.icon.id = `pattern_${this.pid}`;
         this.icon.pid = this.pid;
@@ -154,40 +158,53 @@ class Pattern{
         var parent = this[`${id}List`];
         var container = this[`${id}`];
         var p = this;
+        var n = 0;
         container.removeChildren();
-        for(var j = 0;j<NUM_Y;j++){
-            for(var i = 0;i<NUM_X;i++){
-                parent[j*NUM_X+i] = new Sprite(bitmap);
-                parent[j*NUM_X+i].blendMode=Graphics.BLEND_MULTIPLY;
-                container.addChild(parent[j*NUM_X+i]);
+        for(var j = 0;j<NUM_Y + 2;j++){
+            for(var i = 0;i<NUM_X + 2;i++){
+                n = j*(NUM_X+2)+i;
+                parent[n] = new Sprite(bitmap);
+                parent[n].blendMode=PIXI.BLEND_MODES.COLOR_DODGE;
+                container.addChild(parent[n]);
             }
         }
         bitmap.addLoadListener(function(){
             var width = bitmap.width/2;
             var height = bitmap.height;
-            for(var j = 0;j<NUM_Y;j++){
-                for(var i = 0;i<NUM_X;i++){
+            for(var j = 0;j<NUM_Y + 2;j++){
+                for(var i = 0;i<NUM_X + 2;i++){
                     //parent[j*NUM_X+i] = new Sprite(bitmap1);
                     //this.clothes.addChild(parent[j*NUM_X+i]);
+                    n = j*(NUM_X+2)+i;
                     let x = 0;
                     let y = 0;
                     let wid = 0;
                     let hei = 0;
-                    if(j<=2){
+                    let px = 0;
+
+                    if(j<=3){
                         x = 0;
                     } else {
                         x = width;
                     }
 
-                    if (i == 1) {
+                    if (i == 2) {
                         y = 0;
                     }else {
                         y = -1;
                     }
+                    if(j == 2){
+                        px = -6;
+                    }
+                    if (j==3) {
+                        px = 6;
+                    }
 
-                    parent[j*NUM_X + i].setFrame(x,y,width,height);
-                    parent[j*NUM_X + i].x = i*width;
-                    parent[j*NUM_X + i].y = j*height;
+
+
+                    parent[n].setFrame(x,y,width,height);
+                    parent[n].x = (i-1)*width + px;
+                    parent[n].y = (j-1)*height;
                 }
             }
         })
@@ -201,11 +218,24 @@ class Pattern{
         } else {
             this.moveX[j] += px;
         }
-        for(var i=0;i<NUM_X;i++){
-            var n = j*NUM_X+i;
+        for(var i=0;i<NUM_X+2;i++){
+            var n = (j+1)*(NUM_X+2)+i;
             this.clothesList[n].x += px;
             this.sleeveList[n].x += px;
         }
+    }
+
+    moveY(px = null){
+        var set = false;
+        if(px == null){
+            set = true;
+            px = this.move_y;
+        } else {
+            this.move_y += px;
+        }
+
+        this.clothes.position.y += px;
+        this.sleeve.position.y += px;
     }
 
     resetPos(){
@@ -239,16 +269,14 @@ class Combine extends Sprite {
 
         this.sleeve = this.sleeve2.spriteOne();
 
-
         this.overlay = new Sprite();
         //this.overlay.addChild(m.overlay);
        // this.overlay.addChild(m.statur);
+
         this.overlay.addChild(m.lighter);
 
         this.width = this.clothes.width
         this.height = this.clothes.height
-
-
 
         this.addChild(this.clothes);
         this.addChild(this.sleeve);
@@ -256,16 +284,21 @@ class Combine extends Sprite {
     }
 
     updateSleeve(){
+        let index = this.getChildIndex(this.sleeve);
         this.removeChild(this.sleeve);
-        this.removeChild(this.overlay);
         this.sleeve = this.sleeve2.spriteOne();
-        this.addChild(this.sleeve);
-        this.addChild(this.overlay);
+        this.addChildAt(this.sleeve,index);
     }
 
     move(j,px){
         this.pattern.move(j,px);
+        this.updateSleeve();
 
+    }
+
+    moveY(px){
+        this.pattern.moveY(px);
+        this.updateSleeve();
     }
 
     changeHue(value){
@@ -294,7 +327,7 @@ var $pid = "p";
 
 var $c ;
 var $p ;
-var $r ;
+var $r  = null;
 
 var $cActive;
 var $pActive;
@@ -313,6 +346,7 @@ var $renderTexture4x4;
 var index = 0;
 var bh = 1;
 var frame = 0;
+var frameR = 0;
 
 var $operating = false;
 
@@ -322,7 +356,11 @@ function resetOperate(){
     $("#result_operate").children("div").css({
         "height":height/NUM_Y+"px",
         "line-height":height/NUM_Y+"px"
-    })
+    });
+    $("#operate_y").children("div").css({
+        "height":height/NUM_Y+"px",
+        "line-height":height/NUM_Y+"px"
+    });
 }
 
 function createANewClothes(model = $mid,pattern = $pid){
@@ -353,17 +391,27 @@ function createANewClothes(model = $mid,pattern = $pid){
 
     $p = $pattern[pattern];
     $r = new Combine($c,$p);
-    $rendererSilence.render($r);
     
 
+    setTimeout(function(){$rendererSilence.render($r);},20);
+    
+
+    setTimeout(function(){
+        $r.updateSleeve();
+        changeBright();
+    },20);
 
     
-    $cActive = new Model(model);
-    $pActive = new Pattern(pattern);
-    $rActive = new Combine($cActive,$pActive);
-    $rendererActive.render($r);
+    //$cActive = new Model(model);
+    //$pActive = new Pattern(pattern);
+    //$rActive = new Combine($cActive,$pActive);
+    setTimeout(function(){
+        $rendererActive.render($r);
+        update();
+    },40);
 
-    changeBright();
+
+
 
 
 
@@ -372,37 +420,65 @@ function createANewClothes(model = $mid,pattern = $pid){
 
 }
 
+var $animationlistener = [];
+var $animationlistenerCheck = [];
+
 function startAnimation(){
     requestAnimationFrame(startAnimation);
-
-    if (frame == 10 && !$operating) {
-        $r.position.x = 0;
-        $rendererSilence.render($r);
+    frame ++;
+    if ($animationlistener.length >0 ) {
+        var func = $animationlistener.pop();
+        var status = func();
+        if (!status) {
+            $animationlistener.push(func);
+        }
     }
 
-    if(frame<20){
-        frame ++;
-    } else {
-        //$rendererSilence.render($r);
-
-        index += bh;
-        if(index == 2){
-            bh = -1;
+    if((frameR & 3) == 0) {
+        if ($animationlistenerCheck.length >0 ) {
+            var func = $animationlistenerCheck.pop();
+            var status = func();
+            if (!status) {
+                $animationlistenerCheck.push(func);
+            }
         }
-        if(index == 0){
-            bh = 1;
-        }
+    }
 
-        if(!$operating){
-            $r.position.x = - index * width/NUM_X;
-            frame = 0;
-            $rendererActive.render($r);
-        } else {
+    if ($r != null) {
+
+        if (frame == 10 && !$operating) {
             $r.position.x = 0;
-            frame = 0;
-            //$rendererSilence.render($r);
+            $rendererSilence.render($r);
         }
-        //$r.setFrame(index*width/NUM_X,0,width/NUM_X,height);
+
+        if(frame >= 20) {
+            //$rendererSilence.render($r);
+            index += bh;
+            if(index == 2){
+                bh = -1;
+            }
+            if(index == 0){
+                bh = 1;
+            }
+
+            if(!$operating){
+                $r.position.x = - index * width/NUM_X;
+                frame = 0;
+                $rendererActive.render($r);
+            } else {
+                $r.position.x = 0;
+                frame = 0;
+                //$rendererSilence.render($r);
+            }
+            //$r.setFrame(index*width/NUM_X,0,width/NUM_X,height);
+            
+            frameR ++;
+        }
+    }
+
+    if (frame >= 20) {
+        frameR ++;
+        frame = 0;
     }
 }
 /*
@@ -429,6 +505,9 @@ function startAnimation(){
     */
 var readIn;
 
+var progress1_onstep = 0;
+var progress1_length = 0;
+
 function loadAllData(){
     $.get("data/data.json",function(data,status){
         
@@ -437,17 +516,34 @@ function loadAllData(){
         } else {
             readIn = data;
         }
-        loadModel(readIn["model"]);
-        loadPattern(readIn["pattern"]);
+        var tmp_length = readIn["model"].length + readIn["pattern"].length;
+        progress1_onstep = 100.0/tmp_length;
+        
+        loadModel();
+        loadPattern();
         waitForLoad();
     });
     $listener.push(function(){
         enableOperation();
         createANewClothes("a","p");
+        $("#progress1").animate({"width":"100%"},"slow");
+        $animationlistener.push(fadeProgress1)
         //renderer.render($r);
-        startAnimation();
 
     });
+}
+
+function fadeProgress1() {
+    var progressId = $("#progress1");
+    var width = progressId.css("width");
+    var parentWidth = progressId.parent().css("width");
+    if (width == parentWidth) {
+        $("#overlay").fadeOut("slow");
+        preLoadAllData($("#pre_load_btn"));
+        return true;
+    } else {
+        return false;
+    }
 }
 
 function enableOperation(){
@@ -460,7 +556,7 @@ function enableOperation(){
         $("#pattern_list").append($pattern[i].icon);
     }
     $(".choies-list").children("img").addClass("img-thumbnail");
-    $("#overlay").fadeOut("slow");
+    
 }
 
 function setModel(i){
@@ -473,45 +569,111 @@ function setPattern(i){
     createANewClothes();
 }
 
-function loadModel(dIn){
-    dIn.forEach(function(key){
-        $model[key] = new Model(key);
-    })
+function updateprogress(id){
+    progress1_length += progress1_onstep;
+    $(`#${id}`).css({"width":progress1_length + "%"});
 }
 
-function loadPattern(dIn){
-    dIn.forEach(function(key){
+
+function loadNextModel(){
+    if (readIn["model"].length>0) {
+        var modelName = readIn["model"].pop();
+        $model[modelName] = new Model(modelName);
+        updateprogress("progress1");
+        return false;
+    } else {
+        return true;
+    }
+}
+function loadModel(){
+    $animationlistener.push(loadNextModel);
+}
+
+function loadNextPattern(){
+    if (readIn["pattern"].length > 0) {
+        var key = readIn["pattern"].pop();
         $pattern[key] = new Pattern(key);
-    })
+        updateprogress("progress1");
+        return false;
+    } else {
+        return true;
+    }
+}
+
+function loadPattern(){
+    $animationlistener.push(loadNextPattern);
 }
 
 function loadOkCallBack(){
     while ($listener.length > 0){
-        var func = $listener.pop();
-        func();
+        (function(){
+            let func = $listener.pop();
+            $animationlistener.push(function(){func();return true;});
+        })();
     }
 }
 
-function loadAllHueOfPattern(){
+
+var preLoadPatterns = [];
+var preLoadHue = 0;
+var preLoadNowPattern = "";
+
+function loadAllHueOfPattern(callback){
     for(var i in $pattern){
-        for(var hue = 0;hue<=360;hue++){
-            ImageManager.loadBitmap("images/pattern/",`${i}_1`,hue);
-            ImageManager.loadBitmap("images/pattern/",`${i}_2`,hue);
+        preLoadPatterns.push(i);
+    }
+    progress1_length = 0;
+    progress1_onstep = 100.0/preLoadPatterns.length/360.0;
+
+    $("#loadAllHue").fadeIn("slow");
+
+    preLoadNowPattern = preLoadPatterns.pop();
+    preLoadHue = 0;
+    $animationlistener.push(function(){
+        return preLoadNext(callback);
+    })
+}
+
+function preLoadNext(callback = null){
+    var oneNum = 1;
+    var start = preLoadHue;
+    var end = preLoadHue + oneNum;
+    updateprogress("progress2");
+    for(var hue = start;hue<end;hue++){
+        ImageManager.loadBitmap("images/pattern/",`${preLoadNowPattern}_1`,hue);
+        ImageManager.loadBitmap("images/pattern/",`${preLoadNowPattern}_2`,hue);
+    }
+    if (end >= 360) {
+        if (preLoadPatterns.length > 0) {
+            preLoadNowPattern = preLoadPatterns.pop();
+            preLoadHue = 0;
+            return false;
+        } else {
+            if (callback != null) {
+                callback();
+            }
+            return true;
         }
+    } else {
+        preLoadHue = end;
+        return false;
+    }
+}
+
+function waitForLoadCore(){
+    if (readIn["model"].length == 0 && readIn["pattern"].length == 0 && ImageManager.isReady()) {
+        loadOk = true;
+        loadOkCallBack();
+        return true;
+    } else {
+        return false;
     }
 }
 
 function waitForLoad(){
-    if (ImageManager.isReady()) {
-        //renderer.render(sp2);
-        $loadOk = true;
-        loadOkCallBack();
-    } else {
-        setTimeout(()=>{waitForLoad()},1000);
-    }
+    $animationlistenerCheck.push(waitForLoadCore);
 }
 
-loadAllData();
 
 function update(){
     $operating = true;
@@ -524,6 +686,14 @@ function update(){
 function pullPos(line,px){
     $operating = true;
     $r.move(line,px);
+    update();
+    $operating = false;
+}
+
+
+function pullPosUp(px){
+    $operating = true;
+    $r.moveY(px);
     update();
     $operating = false;
 }
@@ -584,8 +754,8 @@ function download4x4(){
             pushForDownload(img);
             update();
             $operating = false;
-        },100)
-    },100);
+        },20)
+    },20);
     
 
    
@@ -600,26 +770,16 @@ function pushForDownload(img){
 
 
 function preLoadAllData(id){
-    id.children("i").addClass("icon-spin ");
+    //id.children("i").addClass("icon-spin");
     
-    id.addClass("disabled");
-    loadAllHueOfPattern();
-    waitForPreLoad(function(){
-        id.removeClass("btn-default");
-        id.addClass("btn-success");
-        id.html("加载完毕");
-        setTimeout(function(){
-            id.remove();
-        },3000);
+    //id.addClass("disabled");
+    loadAllHueOfPattern(function(){
+        //id.remove();
+        $("#pre_read_info").html("真棒！全部读完了，请谨慎刷新！<br>否则需要重读哟！")
+        $("#loadAllHue").fadeOut(3000);
     });
 }
 
 
-function waitForPreLoad(callback){
-    if (ImageManager.isReady()) {
-        //renderer.render(sp2);
-        callback();
-    } else {
-        setTimeout(()=>{waitForPreLoad(callback)},100);
-    }
-}
+startAnimation();
+loadAllData();

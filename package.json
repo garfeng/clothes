@@ -1,0 +1,8 @@
+{
+	"name":"Clothes Generater for RPG Maker",
+	"main":"http://localhost:8920",
+	"window":{
+		"min_width":1280,
+		"min_height":900
+	}
+}
